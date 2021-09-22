@@ -1,0 +1,46 @@
+{
+  "name": "use-timed-media",
+  "version": "1.0.0",
+  "description": "a react hook for timed, non-video media",
+  "browser": "dist/index.js",
+  "files": [
+    "dist/**/*",
+    "types/**/*"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npm run lint && tsc",
+    "lint": "eslint \"**/*.ts\"",
+    "clean": "rm -rf ./types && rm -rf ./dist && rm -rf ./node_modules",
+    "cleanInstall": "npm ci"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EmersonCoskey/use-timed-media.git"
+  },
+  "keywords": [
+    "react",
+    "hooks",
+    "timed",
+    "timeline",
+    "events"
+  ],
+  "author": "cosc",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "httpss://github.com/EmersonCoskey/use-timed-media/issues"
+  },
+  "homepage": "https://github.com/EmersonCoskey/use-timed-media#readme",
+  "devDependencies": {
+    "@types/react": "^17.0.24",
+    "@typescript-eslint/eslint-plugin": "^4.24.0",
+    "@typescript-eslint/parser": "^4.24.0",
+    "eslint": "^7.27.0",
+    "ts-node": "^10.0.0",
+    "typescript": "^4.2.4"
+  },
+  "dependencies": {
+    "react": "^17.0.2",
+    "use-animation-frame": "^0.1.1"
+  }
+}

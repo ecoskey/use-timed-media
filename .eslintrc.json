@@ -1,0 +1,36 @@
+{
+    "root": true,
+    "parser": "@typescript-eslint/parser",
+    "plugins": ["@typescript-eslint"],
+    "env": {
+        "es6": true,
+        "node": true
+    },
+    "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/eslint-recommended",
+        "plugin:@typescript-eslint/recommended"
+    ],
+    "parserOptions": {
+        "ecmaVersion": 2018,
+        "sourceType": "module"
+    },
+    "rules": {
+        "no-console": "warn",
+        "linebreak-style": "off",
+        "quotes": ["error", "single", { "allowTemplateLiterals": true }],
+
+        "keyword-spacing": ["error", { "before": true, "after": true }],
+        "space-before-blocks": ["error"],
+        "eqeqeq": ["error", "always"],
+
+        "curly": ["error", "all"],
+        "brace-style": ["error", "1tbs", {"allowSingleLine": true}],
+
+        "semi": ["error", "always"],
+        "semi-spacing": ["error", {"before": false, "after": true}],
+        "semi-style": ["error", "last"],
+
+        "arrow-spacing": ["error", { "before": true, "after": true }]
+    }
+}

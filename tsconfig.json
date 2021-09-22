@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "esModuleInterop": true,
+        "target": "es2018",
+        "module": "commonjs",
+        "strict": true,
+
+        "jsx": "preserve",
+
+        "outDir": "./dist",
+
+        "declaration": true,
+        "declarationMap": true,
+        "declarationDir": "./types",
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "**/__tests__/*"]
+}
