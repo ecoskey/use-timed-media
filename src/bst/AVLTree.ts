@@ -4,7 +4,7 @@ import { KVP } from '../util/KeyValuePair';
 import AVLIterator, { IteratorDirection } from './AVLIterator';
 
 // implemented as a variety of Self Balancing Binary Search Tree called an AVL Tree
-export default class AVLTree<K, V> /*implements Iterable<KVP<K, V[]>>*/{
+export default class AVLTree<K, V> implements Iterable<KVP<K, V[]>> {
     readonly #compareFunc: CompareFunc<K>;
     #root?: AVLNode<K, V>;
 
