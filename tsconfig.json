@@ -11,8 +11,10 @@
 
         "declaration": true,
         "declarationMap": true,
-        "declarationDir": "./types",
+        "declarationDir": "./dist/types",
+
+        "typeRoots": [ "./typings", "./node_modules/@types"],
     },
     "include": ["src/**/*"],
-    "exclude": ["node_modules", "**/__tests__/*"]
+    "exclude": ["node_modules", "**/__tests__/*", "./typings"]
 }

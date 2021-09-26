@@ -11,7 +11,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npm run lint && tsc",
     "lint": "eslint \"**/*.ts\"",
-    "clean": "rm -rf ./types && rm -rf ./dist && rm -rf ./node_modules",
+    "clean": "rm -rf ./dist && rm -rf ./node_modules",
     "cleanInstall": "npm ci"
   },
   "repository": {
@@ -37,10 +37,10 @@
     "@typescript-eslint/parser": "^4.24.0",
     "eslint": "^7.27.0",
     "ts-node": "^10.0.0",
-    "typescript": "^4.2.4"
+    "typescript": "^4.2.4",
+    "use-animation-frame": "^0.1.1"
   },
   "dependencies": {
-    "react": "^17.0.2",
-    "use-animation-frame": "^0.1.1"
+    "react": "^17.0.2"
   }
 }
