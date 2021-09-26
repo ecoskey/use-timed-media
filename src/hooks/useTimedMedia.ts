@@ -36,17 +36,30 @@ export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Itera
     }, [playing]); 
 
     useEffect(() => {
-        // if new maxTime is lower than the time the playhead is at
-        if (maxTime < currentTime.current)  { 
+        if (maxTime < currentTime.current)  { // if new maxTime is lower than the time the playhead is at
             setPlaying(false);
             setStartTime(maxTime);
-    }
+        }
     }, [maxTime]);
 
-    useAnimationFrame(({ time, delta }) => {
+    useAnimationFrame(({ time }) => {
         //update currentTime, if we've passed an event node than call handlers and update playHead to next.
         // ? figure out how to deal with end conditions / when there are nodes outside of timeline range?
-    }, [playing, playDir]);
+        if (playDir === 'forward') {
+            currentTime.current = startTime + (time * 1000);
+        } else {
+            currentTime.current = startTime - (time * 1000);
+        }
+
+        const hasNextEvent = playHead.current.current.value !== undefined && (playDir === 'forward' ? maxTime < playHead.current.current.value[0] : playHead.current.current.value[0] < 0);
+
+        const nextEvent = playDir === 'forward' ? playHead.current.current.value ?? [maxTime, []] : playHead.current.current.value ?? [0, []];
+
+        if (currentTime.current >= nextEvent[0] && hasNextEvent) {
+            playHead.current.next();
+            console.log('cheems');
+        }
+    });
 
     return undefined; // ? return object with api functions? 
 }

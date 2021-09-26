@@ -11,10 +11,10 @@
 
         "declaration": true,
         "declarationMap": true,
-        "declarationDir": "./dist/types",
+        "declarationDir": "./types",
 
-        "typeRoots": [ "typeDecs", "./node_modules/@types"],
+        "typeRoots": [ "typeOverrides", "./node_modules/@types"],
     },
     "include": ["src/**/*"],
-    "exclude": ["node_modules", "**/__tests__/*", "typeDecs"]
+    "exclude": ["node_modules", "**/__tests__/*", "typeOverrides"]
 }
