@@ -13,8 +13,8 @@
         "declarationMap": true,
         "declarationDir": "./dist/types",
 
-        "typeRoots": [ "./typings", "./node_modules/@types"],
+        "typeRoots": [ "typeDecs", "./node_modules/@types"],
     },
     "include": ["src/**/*"],
-    "exclude": ["node_modules", "**/__tests__/*", "./typings"]
+    "exclude": ["node_modules", "**/__tests__/*", "typeDecs"]
 }
