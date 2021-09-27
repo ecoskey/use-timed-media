@@ -52,14 +52,19 @@ export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Itera
         }
 
         const hasNextEvent = playHead.current.current.value !== undefined && (playDir === 'forward' ? maxTime < playHead.current.current.value[0] : playHead.current.current.value[0] < 0);
+        const hasOverflowed = playDir === 'forward' ? currentTime.current >= maxTime : currentTime.current <= 0;
 
         const nextEvent = playDir === 'forward' ? playHead.current.current.value ?? [maxTime, []] : playHead.current.current.value ?? [0, []];
 
         if (currentTime.current >= nextEvent[0] && hasNextEvent) {
             playHead.current.next();
-            console.log('cheems');
+            console.log(`cheems ${nextEvent[0]}`);
+        } 
+        if (hasOverflowed) {
+            setPlaying(false);
+            setStartTime(maxTime);
         }
-    });
+    }, [playing, playDir, startTime]);
 
     return undefined; // ? return object with api functions? 
 }
