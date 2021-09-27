@@ -1,6 +1,6 @@
 {
   "name": "use-timed-media",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "a react hook for timed, non-video media",
   "browser": "dist/index.js",
   "files": [
