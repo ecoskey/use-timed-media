@@ -1,8 +1,9 @@
 {
   "name": "use-timed-media",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "a react hook for timed, non-video media",
   "browser": "dist/index.js",
+  "types": "types/index.d.ts",
   "files": [
     "dist/**/*",
     "types/**/*"
@@ -25,7 +26,7 @@
     "timeline",
     "events"
   ],
-  "author": "cosc",
+  "author": "thecostco",
   "license": "GPL-3.0-or-later",
   "bugs": {
     "url": "httpss://github.com/EmersonCoskey/use-timed-media/issues"
