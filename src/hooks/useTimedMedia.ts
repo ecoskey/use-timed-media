@@ -29,7 +29,7 @@ export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Itera
     useEffect(() => { //reset playHead when direction / startTime changes, and set new playHead and currentTime accordingly.
         playHead.current = timeline.entries(playDir === 'forward' ? 'ascending' : 'descending', startTime);
         currentTime.current = startTime;
-    }, [playDir, startTime]);
+    }, [timeline, playDir, startTime]);
 
     useEffect(() => { //update startTime to current place on timeline I guess? can probably do it dual-edge, it shouldn't be too slow
         setStartTime(currentTime.current);
