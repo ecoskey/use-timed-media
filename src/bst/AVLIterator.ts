@@ -3,7 +3,7 @@ import { KVP } from '../util/KeyValuePair';
 
 export type IteratorDirection = 'ascending' | 'descending';
 
-export default class AVLIterator<K, V> implements Iterator<KVP<K, V[]>, undefined> {
+export default class AVLIterator<K, V> implements IterableIterator<KVP<K, V[]>> {
     readonly #direction: IteratorDirection;
     #current?: AVLNode<K, V>;
     #returnedFirst: boolean;
@@ -99,5 +99,9 @@ export default class AVLIterator<K, V> implements Iterator<KVP<K, V[]>, undefine
                 }
             }
         }
+    }
+
+    [Symbol.iterator](): this {
+        return this;
     }
 }
