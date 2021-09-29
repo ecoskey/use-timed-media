@@ -4,7 +4,7 @@ import useAnimationFrame from 'use-animation-frame';
 import AVLTree from '../bst/AVLTree';
 import clamp from '../util/clamp';
 import compareNums from '../util/compareNums';
-import { KVP } from '../util/KeyValuePair';
+import type { KVP }  from '../util/KeyValuePair';
 
 export interface TimedMediaConfig {
     autoplay?: boolean,
