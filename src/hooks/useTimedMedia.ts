@@ -18,7 +18,7 @@ export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Itera
 
     const [ playing, setPlaying ] = useState<boolean>(config.autoplay ?? true);
     const [ playDir, setPlayDir ] = useState<'forward' | 'reverse'>(config.playDir ?? 'forward');
-    const [ maxTime, setMaxTime ] = useState<number>( config.lengthOverride ?? timeline.max?.[0] ?? 0);
+    const [ maxTime, setMaxTime ] = useState<number>( config.lengthOverride ?? timeline.max?.key ?? 0);
     const [ startTime, setStartTime] = useState<number>(config.startTime ? clamp(config.startTime, 0, maxTime) : 0);
 
     // TODO:  const [ handlers, addHandler ] = useReducer( etc etc )
@@ -51,14 +51,14 @@ export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Itera
             currentTime.current = startTime - (time * 1000);
         }
 
-        const hasNextEvent = playHead.current.current.value !== undefined && (playDir === 'forward' ? maxTime < playHead.current.current.value[0] : playHead.current.current.value[0] < 0);
+        const hasNextEvent = playHead.current.current.value !== undefined && (playDir === 'forward' ? maxTime < playHead.current.current.value.key : playHead.current.current.value.key < 0);
         const hasOverflowed = playDir === 'forward' ? currentTime.current >= maxTime : currentTime.current <= 0;
 
-        const nextEvent = playDir === 'forward' ? playHead.current.current.value ?? [maxTime, []] : playHead.current.current.value ?? [0, []];
+        const nextEvent = playDir === 'forward' ? playHead.current.current.value ?? {key: maxTime, value: []} : playHead.current.current.value ?? {key: 0, value: []};
 
-        if (currentTime.current >= nextEvent[0] && hasNextEvent) {
+        if (currentTime.current >= nextEvent.key && hasNextEvent) {
             playHead.current.next();
-            console.log(`cheems ${nextEvent[0]}`);
+            console.log(`cheems ${nextEvent.key}`);
         } 
         if (hasOverflowed) {
             setPlaying(false);
@@ -66,5 +66,5 @@ export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Itera
         }
     }, [playing, playDir, startTime]);
 
-    return undefined; // ? return object with api functions? 
+    return undefined; // ? return object with api functions?  ``
 }

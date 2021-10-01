@@ -42,7 +42,10 @@ export default class AVLNode<K, V> {
     }
 
     get kvp(): KVP<K, V[]> {
-        return [this.#key, this.values];
+        return {
+            key: this.#key, 
+            value: this.values,
+        };
     }
 
     get parent(): AVLNode<K, V> | undefined {
@@ -164,7 +167,7 @@ export default class AVLNode<K, V> {
                         return leftSearchResult;
                     }
                 }
-                break;
+                break; // * unreachable but TS really doesn't like it being removed
             }
         }
     }

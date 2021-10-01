@@ -1,1 +1,1 @@
-export type KVP<K, V> = [key: K, value: V]
+export type KVP<K, V> = {key: K, value: V}
