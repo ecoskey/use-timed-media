@@ -43,6 +43,9 @@ export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Itera
     }, [maxTime]);
 
     useAnimationFrame(({ time }) => {
+        if (!playing) {
+            return;
+        }
         //update currentTime, if we've passed an event node than call handlers and update playHead to next.
         // ? figure out how to deal with end conditions / when there are nodes outside of timeline range?
         if (playDir === 'forward') {
@@ -51,7 +54,7 @@ export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Itera
             currentTime.current = startTime - (time * 1000);
         }
 
-        const hasNextEvent = playHead.current.current.value !== undefined && (playDir === 'forward' ? maxTime < playHead.current.current.value.key : playHead.current.current.value.key < 0);
+        const hasNextEvent = playHead.current.current.value !== undefined && (playDir === 'forward' ? maxTime > playHead.current.current.value.key : playHead.current.current.value.key > 0);
         const hasOverflowed = playDir === 'forward' ? currentTime.current >= maxTime : currentTime.current <= 0;
 
         const nextEvent = playDir === 'forward' ? playHead.current.current.value ?? {key: maxTime, value: []} : playHead.current.current.value ?? {key: 0, value: []};
