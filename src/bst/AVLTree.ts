@@ -11,10 +11,8 @@ export default class AVLTree<K, V> implements Iterable<KVP<K, V[]>> {
     constructor(compareFunc: CompareFunc<K>, initialItems?: Iterable<KVP<K, V[]>> | null | undefined) {
         this.#compareFunc = compareFunc;
 
-        if (initialItems) {
-            for (const [k, v] of initialItems) {
-                this.insert(k, ...v);
-            }
+        for (const [k, v] of initialItems ?? []) {
+            this.insert(k, ...v);
         }
     }
 
