@@ -1,5 +1,5 @@
-import { CompareFunc, CompareResult } from '../util/CompareFunc';
-import { KVP } from '../util/KeyValuePair';
+import type { CompareFunc, CompareResult } from '../util/CompareFunc';
+import type { KVP } from '../util/KeyValuePair';
 
 export default class AVLNode<K, V> {
     readonly #key: K;

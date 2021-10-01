@@ -1,6 +1,6 @@
 import AVLNode from './AVLNode';
-import { CompareFunc } from '../util/CompareFunc';
-import { KVP } from '../util/KeyValuePair';
+import type { CompareFunc } from '../util/CompareFunc';
+import type { KVP } from '../util/KeyValuePair';
 import AVLIterator, { IteratorDirection } from './AVLIterator';
 
 // implemented as a variety of Self Balancing Binary Search Tree called an AVL Tree

@@ -1,5 +1,5 @@
 import AVLNode from './AVLNode';
-import { KVP } from '../util/KeyValuePair';
+import type { KVP } from '../util/KeyValuePair';
 
 export type IteratorDirection = 'ascending' | 'descending';
 
