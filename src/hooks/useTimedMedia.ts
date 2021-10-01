@@ -19,7 +19,7 @@ export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Itera
     const [ playing, setPlaying ] = useState<boolean>(config.autoplay ?? true);
     const [ playDir, setPlayDir ] = useState<'forward' | 'reverse'>(config.playDir ?? 'forward');
     const [ maxTime, setMaxTime ] = useState<number>( config.lengthOverride ?? timeline.max?.key ?? 0);
-    const [ startTime, setStartTime] = useState<number>(config.startTime ? clamp(config.startTime, 0, maxTime) : 0);
+    const [ startTime, setStartTime] = useState<number>(config.startTime ? clamp(config.startTime, 0, maxTime) : (playDir === 'forward' ? 0 : maxTime));
 
     // TODO:  const [ handlers, addHandler ] = useReducer( etc etc )
 
@@ -55,8 +55,9 @@ export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Itera
         const hasOverflowed = playDir === 'forward' ? currentTime.current >= maxTime : currentTime.current <= 0;
 
         const nextEvent = playDir === 'forward' ? playHead.current.current.value ?? {key: maxTime, value: []} : playHead.current.current.value ?? {key: 0, value: []};
+        const timeUntilNext = playDir === 'forward' ? nextEvent.key - currentTime.current : currentTime.current - nextEvent.key;
 
-        if (currentTime.current >= nextEvent.key && hasNextEvent) {
+        if (hasNextEvent && timeUntilNext <= 0) {
             playHead.current.next();
             console.log(`cheems ${nextEvent.key}`);
         } 
