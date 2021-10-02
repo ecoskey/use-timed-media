@@ -24,11 +24,11 @@ export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Itera
     // TODO:  const [ handlers, addHandler ] = useReducer( etc etc )
 
     const playHead = useRef<AVLIterator<number, E>>(timeline.entries(playDir === 'forward' ? 'ascending' : 'descending', startTime));
-    playHead.current.next();
     const currentTime = useRef<number>(startTime);
 
     useEffect(() => { //reset playHead when direction / startTime changes, and set new playHead and currentTime accordingly.
         playHead.current = timeline.entries(playDir === 'forward' ? 'ascending' : 'descending', startTime);
+        playHead.current.next();
         currentTime.current = startTime;
     }, [timeline, playDir, startTime]);
 
