@@ -123,5 +123,5 @@ export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Itera
 
         get length() { return maxTime; },
         set length(newLength: number) { setMaxTime(newLength); },
-    }; // ? return object with api functions?  ``
+    };
 }
