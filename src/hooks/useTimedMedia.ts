@@ -40,7 +40,7 @@ export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Itera
     const [ playing, setPlaying ] = useState<boolean>(config.autoplay ?? true);
     const [ playDir, setPlayDir ] = useState<'forward' | 'reverse'>(config.playDir ?? 'forward');
     const [ maxTime, setMaxTime ] = useState<number>( config.lengthOverride ?? timeline.max?.key ?? 0);
-    const [ startTime, setStartTime] = useState<number>(config.startTime ? clamp(config.startTime, 0, maxTime) : (playDir === 'forward' ? 0 : maxTime));
+    const [ startTime, setStartTime ] = useState<number>(config.startTime ? clamp(config.startTime, 0, maxTime) : (playDir === 'forward' ? 0 : maxTime));
 
     const [ handlers ] = useState<EventBus<TimedMediaEvents<E>>>(new EventBus());
 
@@ -54,7 +54,7 @@ export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Itera
 
         // --- --- ---[ Handlers ]--- --- ---
         handlers.dispatch('togglePlayDirection', playDir);
-        handlers.dispatch('seek', currentTime.current);
+        handlers.dispatch('seek', startTime);
     }, [timeline, playDir, startTime, handlers]);
 
     useEffect(() => { //update startTime to current place on timeline I guess? can probably do it dual-edge, it shouldn't be too slow
@@ -105,7 +105,7 @@ export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Itera
             // --- --- ---[ Handlers ]--- --- ---
             handlers.dispatch('end');
         }
-    }, [playing, playDir, startTime]);
+    }, [playing, playDir, startTime, handlers]);
 
     return {
         on: <K extends keyof TimedMediaEvents<E>>(event: K, callback: CallbackFromTuple<TimedMediaEvents<E>[K]>) => handlers.on(event, callback),
