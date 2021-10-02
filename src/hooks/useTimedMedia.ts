@@ -24,6 +24,7 @@ export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Itera
     // TODO:  const [ handlers, addHandler ] = useReducer( etc etc )
 
     const playHead = useRef<AVLIterator<number, E>>(timeline.entries(playDir === 'forward' ? 'ascending' : 'descending', startTime));
+    playHead.current.next();
     const currentTime = useRef<number>(startTime);
 
     useEffect(() => { //reset playHead when direction / startTime changes, and set new playHead and currentTime accordingly.
@@ -37,10 +38,10 @@ export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Itera
 
     useEffect(() => {
         if (maxTime < currentTime.current)  { // if new maxTime is lower than the time the playhead is at
-            setPlaying(false);
+            setPlaying(playDir === 'reverse'); // * if playing in reverse, keeps playing and seeks to new maxTime
             setStartTime(maxTime);
         }
-    }, [maxTime]);
+    }, [maxTime, playDir]);
 
     useAnimationFrame(({ time }) => {
         if (!playing) {
