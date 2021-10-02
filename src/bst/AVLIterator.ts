@@ -70,8 +70,8 @@ export default class AVLIterator<K, V> implements IterableIterator<KVP<K, V[]>> 
         switch (this.#direction) {
             case 'ascending': {
                 const successor: AVLNode<K, V> | undefined = this.#current.successor;
+                this.#current = successor;
                 if (successor) {
-                    this.#current = successor;
                     return {
                         value: successor.kvp,
                         done: false,
@@ -85,8 +85,8 @@ export default class AVLIterator<K, V> implements IterableIterator<KVP<K, V[]>> 
             }
             case 'descending': {
                 const predecessor: AVLNode<K, V> | undefined = this.#current.predecessor;
+                this.#current = predecessor;
                 if (predecessor) {
-                    this.#current = predecessor;
                     return {
                         value: predecessor.kvp,
                         done: false,
