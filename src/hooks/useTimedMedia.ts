@@ -5,7 +5,7 @@ import AVLTree from '../bst/AVLTree';
 import clamp from '../util/clamp';
 import compareNums from '../util/compareNums';
 import type { KVP }  from '../util/KeyValuePair';
-import EventBus from '../util/EventBus';
+import EventBus, { CallbackFromTuple } from '../util/EventBus';
 
 export interface TimedMediaConfig {
     autoplay?: boolean,
@@ -94,18 +94,23 @@ export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Itera
 
         if (hasNextEvent && timeUntilNext <= 0) {
             playHead.current.next();
-            console.log(`cheems ${nextEvent.key}`);
+
+            // --- --- ---[ Handlers ]--- --- ---
+            handlers.dispatch('media', nextEvent.value, nextEvent.key);
         } 
         if (hasOverflowed) {
             setPlaying(false);
             setStartTime(maxTime);
+
+            // --- --- ---[ Handlers ]--- --- ---
+            handlers.dispatch('end');
         }
     }, [playing, playDir, startTime]);
 
     return {
-        on: handlers.on,
-        unsubscribe: handlers.unsubscribe,
-        clear: handlers.clear,
+        on: <K extends keyof TimedMediaEvents<E>>(event: K, callback: CallbackFromTuple<TimedMediaEvents<E>[K]>) => handlers.on(event, callback),
+        unsubscribe: <K extends keyof TimedMediaEvents<E>>(event: K, target: number) => handlers.unsubscribe(event, target),
+        clear: () => handlers.clear(),
 
         get playing() { return playing; },
         set playing(playing: boolean) { setPlaying(playing); },

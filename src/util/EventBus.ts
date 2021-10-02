@@ -1,4 +1,4 @@
-type CallbackFromTuple<T extends readonly unknown[]> = (...params: T) => void
+export type CallbackFromTuple<T extends readonly unknown[]> = (...params: T) => void
 
 export default class EventBus<E extends Record<string, readonly unknown[]>> {
     #maxKey: number
