@@ -5,6 +5,7 @@ import AVLTree from '../bst/AVLTree';
 import clamp from '../util/clamp';
 import compareNums from '../util/compareNums';
 import type { KVP }  from '../util/KeyValuePair';
+import EventBus from '../util/EventBus';
 
 export interface TimedMediaConfig {
     autoplay?: boolean,
@@ -13,15 +14,35 @@ export interface TimedMediaConfig {
     lengthOverride?: number,
 }
 
-export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Iterable<KVP<number, E[]>> | null | undefined): void {
-    const [ timeline, setTimeline ] = useState<AVLTree<number, E>>(() => new AVLTree(compareNums, items));
+export interface TimedMediaEvents<E> extends Record<string, readonly unknown[]> {
+    media: [events: E[], time: number],
+    togglePlayback: [nowPlaying: boolean, time: number],
+    togglePlayDirection: [playDirection: 'forward' | 'reverse'],
+    setMaxTime: [maxTime: number],
+    seek: [time: number],
+    end: [],
+}
+
+export interface TimedMediaAPI<E> {
+    readonly on: EventBus<TimedMediaEvents<E>>['on'],
+    readonly unsubscribe: EventBus<TimedMediaEvents<E>>['unsubscribe'],
+    readonly clear: EventBus<TimedMediaEvents<E>>['clear'],
+
+    playing: boolean,
+    playDirection: 'forward' | 'reverse',
+    time: number,
+    length: number,
+}
+
+export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Iterable<KVP<number, E[]>> | null | undefined): TimedMediaAPI<E> {
+    const [ timeline ] = useState<AVLTree<number, E>>(() => new AVLTree(compareNums, items));
 
     const [ playing, setPlaying ] = useState<boolean>(config.autoplay ?? true);
     const [ playDir, setPlayDir ] = useState<'forward' | 'reverse'>(config.playDir ?? 'forward');
     const [ maxTime, setMaxTime ] = useState<number>( config.lengthOverride ?? timeline.max?.key ?? 0);
     const [ startTime, setStartTime] = useState<number>(config.startTime ? clamp(config.startTime, 0, maxTime) : (playDir === 'forward' ? 0 : maxTime));
 
-    // TODO:  const [ handlers, addHandler ] = useReducer( etc etc )
+    const [ handlers ] = useState<EventBus<TimedMediaEvents<E>>>(new EventBus());
 
     const playHead = useRef<AVLIterator<number, E>>(timeline.entries(playDir === 'forward' ? 'ascending' : 'descending', startTime));
     const currentTime = useRef<number>(startTime);
@@ -30,25 +51,35 @@ export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Itera
         playHead.current = timeline.entries(playDir === 'forward' ? 'ascending' : 'descending', startTime);
         playHead.current.next();
         currentTime.current = startTime;
-    }, [timeline, playDir, startTime]);
+
+        // --- --- ---[ Handlers ]--- --- ---
+        handlers.dispatch('togglePlayDirection', playDir);
+        handlers.dispatch('seek', currentTime.current);
+    }, [timeline, playDir, startTime, handlers]);
 
     useEffect(() => { //update startTime to current place on timeline I guess? can probably do it dual-edge, it shouldn't be too slow
         setStartTime(currentTime.current);
-    }, [playing]); 
+
+        // --- --- ---[ Handlers ]--- --- ---
+        handlers.dispatch('togglePlayback', playing, currentTime.current);
+    }, [playing, handlers]); 
 
     useEffect(() => {
         if (maxTime < currentTime.current)  { // if new maxTime is lower than the time the playhead is at
             setPlaying(playDir === 'reverse'); // * if playing in reverse, keeps playing and seeks to new maxTime
             setStartTime(maxTime);
         }
-    }, [maxTime, playDir]);
+
+        // --- --- ---[ Handlers ]--- --- ---
+        handlers.dispatch('setMaxTime', maxTime);
+    }, [maxTime, playDir, handlers]);
 
     useAnimationFrame(({ time }) => {
         if (!playing) {
             return;
         }
+
         //update currentTime, if we've passed an event node than call handlers and update playHead to next.
-        // ? figure out how to deal with end conditions / when there are nodes outside of timeline range?
         if (playDir === 'forward') {
             currentTime.current = startTime + (time * 1000);
         } else {
@@ -71,5 +102,21 @@ export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Itera
         }
     }, [playing, playDir, startTime]);
 
-    return undefined; // ? return object with api functions?  ``
+    return {
+        on: handlers.on,
+        unsubscribe: handlers.unsubscribe,
+        clear: handlers.clear,
+
+        get playing() { return playing; },
+        set playing(playing: boolean) { setPlaying(playing); },
+
+        get playDirection() { return playDir; },
+        set playDirection(dir: 'forward' | 'reverse') { setPlayDir(dir); },
+
+        get time() { return currentTime.current; },
+        set time(time: number) { setStartTime(time); },
+
+        get length() { return maxTime; },
+        set length(newLength: number) { setMaxTime(newLength); },
+    }; // ? return object with api functions?  ``
 }
