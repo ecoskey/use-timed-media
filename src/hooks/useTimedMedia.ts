@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import useAnimationFrame from 'use-animation-frame';
 import AVLTree from '../bst/AVLTree';
 import compareNums from '../util/compareNums';
@@ -52,28 +52,33 @@ export default function useTimedMedia<E>(config: Partial<PlaybackState> & { seek
 
     const [ handlers ] = useState<EventBus<TimedMediaEvents<E>>>(new EventBus());
 
-    const [ playHead, setPlayHead ] = useState<AVLNode<number, E> | undefined>(timeline.root?.search(time, playDir === 'forward' ? 'closest-max' : 'closest-min'));
+    const playHead = useRef<AVLNode<number, E> | undefined>(timeline.root?.search(time, playDir === 'forward' ? 'closest-max' : 'closest-min'));
+
+    const currentTime = useRef<number>(time);
 
     // --- --- ---[ update state with new props and handle stuff accordingly ]--- --- ---
+    useEffect(() => {
+        addToPlaybackState(config);
+        //! addToPlayBackState does the same thing no matter what instance it is, so no need to add it to dependencies
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [config.playing, config.playDir, config.time, config.length]);
 
-    addToPlaybackState(config);
-
-    if (config.playing && config.playing !== playing) { 
+    if (config.playing !== undefined && config.playing !== playing) { 
         resetPlayHead();
         handlers.dispatch('togglePlayback', playing, time);
     }
 
-    if (config.playDir && config.playDir !== playDir) { 
+    if (config.playDir !== undefined && config.playDir !== playDir) { 
         resetPlayHead(); 
         handlers.dispatch('togglePlayDirection', playDir);
     }
 
-    if ((config.time && config.time !== time) || config.seek) { 
+    if ((config.time !== undefined && config.time !== time) || config.seek) { 
         resetPlayHead();
         handlers.dispatch('seek', time);
     }
 
-    if (config.length && config.length !== length) { 
+    if (config.length !== undefined && config.length !== length) { 
         if (time > length)  { // if new maxTime is lower than the time the playhead is at
             addToPlaybackState({
                 playing: playDir === 'reverse',
@@ -91,29 +96,27 @@ export default function useTimedMedia<E>(config: Partial<PlaybackState> & { seek
     }
 
     function resetPlayHead(): void {
-        setPlayHead(timeline.root?.search(time, playDir === 'forward' ? 'closest-max' : 'closest-min'));
+        playHead.current = timeline.root?.search(time, playDir === 'forward' ? 'closest-max' : 'closest-min');
     }
 
-    useAnimationFrame(({ delta }) => {
+    useAnimationFrame(({ delta }) => { //update currentTime, if we've passed an event node than call handlers and update playHead to next.
         if (!playing) { return; }
 
-        //update currentTime, if we've passed an event node than call handlers and update playHead to next.
-        const newTime = playDir === 'forward' ? time + (delta * 1000) : time - (delta * 1000);
+        currentTime.current += delta * (playDir === 'forward' ? 1000 : -1000);
 
-        addToPlaybackState({ time: newTime });
+        const hasOverflowed = playDir === 'forward' ? length <= currentTime.current : currentTime.current <= 0;
 
-        const hasNextEvent = playHead !== undefined && (playDir === 'forward' ? length > playHead.key : playHead.key > 0);
-        const hasOverflowed = playDir === 'forward' ? length <= time : time <= 0;
+        if (playHead.current) {
+            const timeUntilNext = playDir === 'forward' ? playHead.current.key - currentTime.current : currentTime.current - playHead.current.key;
 
-        const nextEvent = playHead ?? playDir === 'forward' ? {key: length, value: []} : {key: 0, value: []};
-        const timeUntilNext = playDir === 'forward' ? nextEvent.key - time : time - nextEvent.key;
+            if (timeUntilNext <= 0) {
+                // --- --- ---[ Handlers, need to dispatch before advancing ref ]--- --- ---
+                handlers.dispatch('media', playHead.current.values, playHead.current.key);
 
-        if (hasNextEvent && timeUntilNext <= 0) {
-            setPlayHead(playDir === 'forward' ? playHead.successor : playHead.predecessor);
+                playHead.current = playDir === 'forward' ? playHead.current.successor : playHead.current.predecessor;
+            }
+        }
 
-            // --- --- ---[ Handlers ]--- --- ---
-            handlers.dispatch('media', nextEvent.value, nextEvent.key);
-        } 
         if (hasOverflowed) {
             addToPlaybackState({
                 playing: false,
@@ -122,6 +125,8 @@ export default function useTimedMedia<E>(config: Partial<PlaybackState> & { seek
 
             // --- --- ---[ Handlers ]--- --- ---
             handlers.dispatch('end');
+
+            return;
         }
     }, [playing, playDir, handlers]);
 
