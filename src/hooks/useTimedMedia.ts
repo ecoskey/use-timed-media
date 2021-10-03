@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useReducer, useRef, useState } from 'react';
 import AVLIterator from '../bst/AVLIterator';
 import useAnimationFrame from 'use-animation-frame';
 import AVLTree from '../bst/AVLTree';
@@ -6,12 +6,14 @@ import clamp from '../util/clamp';
 import compareNums from '../util/compareNums';
 import type { KVP }  from '../util/KeyValuePair';
 import EventBus, { CallbackFromTuple } from '../util/EventBus';
+import AVLNode from '../bst/AVLNode';
+import { getIterableFirst } from '../util/Iterables';
 
-export interface TimedMediaConfig {
-    autoplay?: boolean,
-    playDir?: 'forward' | 'reverse',
-    startTime?: number,
-    lengthOverride?: number,
+export interface PlaybackState {
+    playing: boolean,
+    playDir: 'forward' | 'reverse',
+    time: number,
+    length: number,
 }
 
 export interface TimedMediaEvents<E> extends Record<string, readonly unknown[]> {
@@ -34,20 +36,43 @@ export interface TimedMediaAPI<E> {
     length: number,
 }
 
-export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Iterable<KVP<number, E[]>> | null | undefined): TimedMediaAPI<E> {
+export default function useTimedMedia<E>(config: Partial<PlaybackState> & { seek?: boolean }, items?: Iterable<KVP<number, E[]>> | null | undefined): TimedMediaAPI<E> {
     const [ timeline ] = useState<AVLTree<number, E>>(() => new AVLTree(compareNums, items));
 
-    const [ playing, setPlaying ] = useState<boolean>(config.autoplay ?? true);
-    const [ playDir, setPlayDir ] = useState<'forward' | 'reverse'>(config.playDir ?? 'forward');
-    const [ maxTime, setMaxTime ] = useState<number>( config.lengthOverride ?? timeline.max?.key ?? 0);
-    const [ startTime, setStartTime ] = useState<number>(config.startTime ? clamp(config.startTime, 0, maxTime) : (playDir === 'forward' ? 0 : maxTime));
+    const [ playbackState, setPlaybackState ] = useState<PlaybackState>({...{
+        playing: true,
+        playDir: 'forward',
+        time: 0,
+        length: timeline.max?.key ?? 0,
+    }, ...config});
+
+    const { //make state accessible with less text through object desctructuring. still assign to them through setPlayBackState function though.
+        playing,
+        playDir,
+        time,
+        length,
+    } = playbackState;
 
     const [ handlers ] = useState<EventBus<TimedMediaEvents<E>>>(new EventBus());
 
-    const playHead = useRef<AVLIterator<number, E>>(timeline.entries(playDir === 'forward' ? 'ascending' : 'descending', startTime));
-    const currentTime = useRef<number>(startTime);
+    const [ playHead, setPlayHead ] = useState<AVLNode<number, E> | undefined>(timeline.root?.search(time, playDir === 'forward' ? 'closest-max' : 'closest-min'));
 
-    useEffect(() => { //reset playHead when direction / startTime changes, and set new playHead and currentTime accordingly.
+    // --- --- ---[ update state with new props and handle stuff accordingly ]--- --- ---
+
+    addToPlaybackState(config);
+
+    if ((config.playing && config.playing !== playing) || (config.playDir && config.playDir !== playDir)) { handleSetPlaying(); }
+    if ((config.time && config.time !== time) || config.seek) { handleSeek(); }
+    if (config.length && config.length !== length) { handleSetLength(); }
+
+    // --- --- ---[ function declarations for handling changing state, and timer function ]--- --- ---
+
+    //update state with new props
+    function addToPlaybackState(newState: Partial<PlaybackState>): void { 
+        setPlaybackState({...playbackState, ...newState});
+    }
+
+    function handleSetPlaying(): void { //reset playHead when direction / startTime changes, and set new playHead and currentTime accordingly.
         playHead.current = timeline.entries(playDir === 'forward' ? 'ascending' : 'descending', startTime);
         playHead.current.next();
         currentTime.current = startTime;
@@ -57,14 +82,14 @@ export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Itera
         handlers.dispatch('seek', startTime);
     }, [timeline, playDir, startTime, handlers]);
 
-    useEffect(() => { //update startTime to current place on timeline I guess? can probably do it dual-edge, it shouldn't be too slow
+    function handleSeek(): void { //update startTime to current place on timeline I guess? can probably do it dual-edge, it shouldn't be too slow
         setStartTime(currentTime.current);
 
         // --- --- ---[ Handlers ]--- --- ---
         handlers.dispatch('togglePlayback', playing, currentTime.current);
     }, [playing, handlers]); 
 
-    useEffect(() => {
+    function handleSetLength(): void { // if new maxTime is lower than the time the playhead is at, handle accordingly and clamp current time
         if (maxTime < currentTime.current)  { // if new maxTime is lower than the time the playhead is at
             setPlaying(playDir === 'reverse'); // * if playing in reverse, keeps playing and seeks to new maxTime
             setStartTime(maxTime);
@@ -74,22 +99,21 @@ export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Itera
         handlers.dispatch('setMaxTime', maxTime);
     }, [maxTime, playDir, handlers]);
 
-    useAnimationFrame(({ time }) => {
-        if (!playing) {
-            return;
-        }
+    useAnimationFrame(({ delta }) => {
+        if (!playing) { return; }
 
         //update currentTime, if we've passed an event node than call handlers and update playHead to next.
-        if (playDir === 'forward') {
-            currentTime.current = startTime + (time * 1000);
-        } else {
-            currentTime.current = startTime - (time * 1000);
-        }
+        const newTime = 
+            playDir === 'forward' ? 
+            time + (delta * 1000) : 
+            time - (delta * 1000) ;
 
-        const hasNextEvent = playHead.current.current.value !== undefined && (playDir === 'forward' ? maxTime > playHead.current.current.value.key : playHead.current.current.value.key > 0);
-        const hasOverflowed = playDir === 'forward' ? currentTime.current >= maxTime : currentTime.current <= 0;
+        addToPlaybackState({ time: newTime });
 
-        const nextEvent = playDir === 'forward' ? playHead.current.current.value ?? {key: maxTime, value: []} : playHead.current.current.value ?? {key: 0, value: []};
+        const hasNextEvent = playHead !== undefined && (playDir === 'forward' ? length > playHead.key : playHead.key > 0);
+        const hasOverflowed = playDir === 'forward' ? length <= time : time <= 0;
+
+        const nextEvent = playDir === 'forward' ? playHead ?? {key: length, value: []} : playHead ?? {key: 0, value: []};
         const timeUntilNext = playDir === 'forward' ? nextEvent.key - currentTime.current : currentTime.current - nextEvent.key;
 
         if (hasNextEvent && timeUntilNext <= 0) {
@@ -99,15 +123,17 @@ export default function useTimedMedia<E>(config: TimedMediaConfig, items?: Itera
             handlers.dispatch('media', nextEvent.value, nextEvent.key);
         } 
         if (hasOverflowed) {
-            setPlaying(false);
-            setStartTime(maxTime);
+            addToPlaybackState({
+                playing: false,
+                time: playDir === 'forward' ? length : 0,
+            });
 
             // --- --- ---[ Handlers ]--- --- ---
             handlers.dispatch('end');
         }
     }, [playing, playDir, startTime, handlers]);
 
-    return {
+    return { //? what to return for API?
         on: <K extends keyof TimedMediaEvents<E>>(event: K, callback: CallbackFromTuple<TimedMediaEvents<E>[K]>) => handlers.on(event, callback),
         unsubscribe: <K extends keyof TimedMediaEvents<E>>(event: K, target: number) => handlers.unsubscribe(event, target),
         clear: () => handlers.clear(),

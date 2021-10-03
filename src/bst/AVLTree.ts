@@ -28,6 +28,10 @@ export default class AVLTree<K, V> implements Iterable<KVP<K, V[]>> {
         return this.#root?.max?.kvp;
     }
 
+    get root(): AVLNode<K, V> | undefined {
+        return this.#root;
+    }
+
     get(key: K): KVP<K, V[]> | undefined {
         return this.#root?.get(key);
     }
