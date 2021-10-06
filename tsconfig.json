@@ -12,8 +12,6 @@
         "declaration": true,
         "declarationMap": true,
         "declarationDir": "./types",
-
-        "typeRoots": [ "typeOverrides", "./node_modules/@types"],
     },
     "include": ["src/**/*"],
     "exclude": ["node_modules", "**/__tests__/*", "typeOverrides"]
