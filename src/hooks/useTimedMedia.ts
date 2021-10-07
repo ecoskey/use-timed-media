@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import useAnimationFrame from 'use-animation-frame';
+import useAnimationFrame from './useAnimationFrame';
 import AVLTree from '../bst/AVLTree';
 import compareNums from '../util/compareNums';
 import type { KVP }  from '../util/KeyValuePair';
@@ -99,10 +99,8 @@ export default function useTimedMedia<E>(config: Partial<PlaybackState> & { seek
         playHead.current = timeline.root?.search(time, playDir === 'forward' ? 'closest-max' : 'closest-min');
     }
 
-    useAnimationFrame(({ delta }) => { //update currentTime, if we've passed an event node than call handlers and update playHead to next.
-        if (!playing) { return; }
-
-        currentTime.current += delta * (playDir === 'forward' ? 1000 : -1000);
+    useAnimationFrame((time, delta) => { //update currentTime, if we've passed an event node than call handlers and update playHead to next.
+        currentTime.current += playDir === 'forward' ? delta : -delta;
 
         const hasOverflowed = playDir === 'forward' ? length <= currentTime.current : currentTime.current <= 0;
 
@@ -128,7 +126,7 @@ export default function useTimedMedia<E>(config: Partial<PlaybackState> & { seek
 
             return;
         }
-    }, [playing, playDir, handlers]);
+    }, [playing, playDir, handlers], playing);
 
     return {
         on: <K extends keyof TimedMediaEvents<E>>(event: K, callback: CallbackFromTuple<TimedMediaEvents<E>[K]>) => handlers.on(event, callback),
