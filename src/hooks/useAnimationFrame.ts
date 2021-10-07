@@ -3,28 +3,29 @@ import { useEffect, useRef } from 'react';
 export default function useAnimationFrame(
     fn: (time: DOMHighResTimeStamp, delta: DOMHighResTimeStamp) => void,
     deps: React.DependencyList = [],
-    animating?: boolean | (() => boolean),
+    animating: boolean | (() => boolean) = true,
 ): void {
     const animID = useRef<number>(0);
     const animStatus = useRef<boolean>(false);
 
-    const time = useRef<number>(0);
-    const lastTime = useRef<number>(0);
+    const startTime = useRef<DOMHighResTimeStamp>(performance.now());   
+    const time = useRef<DOMHighResTimeStamp>(startTime.current);
+    const lastTime = useRef<DOMHighResTimeStamp>(startTime.current);
 
-    const animateFn: (timeStamp: DOMHighResTimeStamp) => void = (timeStamp: DOMHighResTimeStamp) => {
+    const frameFn = (timeStamp: DOMHighResTimeStamp): void => {
         lastTime.current = time.current;
-        time.current = timeStamp;
+        time.current = timeStamp - startTime.current;
 
         fn(time.current, time.current - lastTime.current);
 
-        requestAnimationFrame(animateFn);
+        requestAnimationFrame(frameFn);
     };
 
     useEffect(() => {
-        const toAnimate: boolean = typeof animating === 'function' ? animating() : animating ?? true;
+        const toAnimate: boolean = typeof animating === 'function' ? animating() : animating;
 
         if (toAnimate) {
-            animID.current = requestAnimationFrame(animateFn);
+            animID.current = requestAnimationFrame(frameFn);
             animStatus.current = true;
         }
 
