@@ -1,9 +1,7 @@
-export type CallbackFromTuple<T extends readonly unknown[]> = (...params: T) => void
-
 export default class EventBus<E extends Record<string, readonly unknown[]>> {
     #maxKey: number
     #listeners: {
-        [K in keyof E]+?: Map<number, CallbackFromTuple<E[K]>>;
+        [K in keyof E]+?: Map<number, (...params: E[K]) => void>;
     };
 
     constructor() {
@@ -11,21 +9,19 @@ export default class EventBus<E extends Record<string, readonly unknown[]>> {
         this.#listeners = {};
     }
 
-    on<K extends keyof E>(event: K, callback: CallbackFromTuple<E[K]>): number {
-        const targetHandlerList = this.#listeners?.[event];
+    on<K extends keyof E>(event: K, callback: (...params: E[K]) => void): number {
+        const targetHandlerList: Map<number, (...params: E[K]) => void> | undefined = this.#listeners[event];
 
         if (targetHandlerList) {
-            this.#maxKey++;
             targetHandlerList.set(this.#maxKey, callback);
         } else {
-            this.#maxKey++;
-            this.#listeners[event] = new Map<number, CallbackFromTuple<E[K]>>([[this.#maxKey, callback]]);
+            this.#listeners[event] = new Map<number, (...params: E[K]) => void>([[this.#maxKey, callback]]);
         }
 
-        return this.#maxKey;
+        return this.#maxKey++;
     }
 
-    dispatch<K extends keyof E>(event: K, ...data: E[K]): void {
+    dispatch<K extends keyof E>(event: K, data: E[K]): void {
         const targetHandlerList = this.#listeners?.[event];
 
         targetHandlerList?.forEach(callback => {
