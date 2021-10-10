@@ -3,10 +3,9 @@ import { useEffect, useRef } from 'react';
 export default function useAnimationFrame(
     fn: (time: DOMHighResTimeStamp, delta: DOMHighResTimeStamp) => void,
     deps: React.DependencyList = [],
-    animating: boolean | (() => boolean) = true,
+    animating = true,
 ): void {
-    const animID = useRef<number>(0);
-    const animStatus = useRef<boolean>(false);
+    const animID = useRef<number | undefined>(0);
 
     const startTime = useRef<DOMHighResTimeStamp>(performance.now());   
     const time = useRef<DOMHighResTimeStamp>(startTime.current);
@@ -18,21 +17,20 @@ export default function useAnimationFrame(
 
         fn(time.current, time.current - lastTime.current);
 
-        requestAnimationFrame(frameFn);
+        animID.current = requestAnimationFrame(frameFn); 
     };
 
     useEffect(() => {
-        const toAnimate: boolean = typeof animating === 'function' ? animating() : animating;
-
-        if (toAnimate) {
+        if (animating) {
             animID.current = requestAnimationFrame(frameFn);
-            animStatus.current = true;
+        } else if (animID.current !== undefined) {
+            cancelAnimationFrame(animID.current);
         }
 
         return () => {
-            if (animStatus.current) {
+            if (animID.current !== undefined) {
                 cancelAnimationFrame(animID.current);
-                animStatus.current = false;
+                animID.current = undefined;
             }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
